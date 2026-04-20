@@ -17,15 +17,18 @@ const client = new Client({
     ]
 });
 
+// 🔧 CONFIG
+const TOKEN = 'MTQ5NTgwODk4MzYyNDE5MjE1MA.Gla6Zi.vqgLM8gYniT9BRqjZ72gkY2rnsSvtYvq0Lw8Cs';
 const CANAL_LOG = '1495178025602515177';
 
+// ONLINE
 client.once(Events.ClientReady, () => {
-    console.log(`✅ ${client.user.tag} está online!`);
+    console.log(`🔥 ${client.user.tag} ONLINE`);
 });
 
 // PAINEL
 client.on(Events.MessageCreate, async (message) => {
-    if (message.content === '!setpainel') {
+    if (message.content === '!setpainel' && !message.author.bot) {
 
         const botao = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
@@ -35,7 +38,7 @@ client.on(Events.MessageCreate, async (message) => {
         );
 
         await message.channel.send({
-            content: "🏥 **HOSPITAL BELLA - PEDIR SET**\nClique abaixo para solicitar seu cargo:",
+            content: "🏥 **HOSPITAL BELLA - PEDIR SET**\nClique abaixo para solicitar:",
             components: [botao]
         });
     }
@@ -44,9 +47,10 @@ client.on(Events.MessageCreate, async (message) => {
 // INTERAÇÕES
 client.on(Events.InteractionCreate, async (interaction) => {
 
-    // BOTÃO
-    if (interaction.isButton()) {
-        if (interaction.customId === 'pedir_set') {
+    try {
+
+        // BOTÃO
+        if (interaction.isButton() && interaction.customId === 'pedir_set') {
 
             const modal = new ModalBuilder()
                 .setCustomId('form_set')
@@ -85,13 +89,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 new ActionRowBuilder().addComponents(responsavel)
             );
 
-            await interaction.showModal(modal);
+            return interaction.showModal(modal);
         }
-    }
 
-    // ENVIO
-    if (interaction.isModalSubmit()) {
-        if (interaction.customId === 'form_set') {
+        // ENVIO
+        if (interaction.isModalSubmit() && interaction.customId === 'form_set') {
 
             const id = interaction.fields.getTextInputValue('id');
             const nome = interaction.fields.getTextInputValue('nome');
@@ -100,6 +102,10 @@ client.on(Events.InteractionCreate, async (interaction) => {
             const responsavel = interaction.fields.getTextInputValue('responsavel');
 
             const canal = await client.channels.fetch(CANAL_LOG);
+
+            if (!canal) {
+                return interaction.reply({ content: "❌ Canal não encontrado!", ephemeral: true });
+            }
 
             const botoes = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
@@ -125,30 +131,33 @@ client.on(Events.InteractionCreate, async (interaction) => {
             });
 
             await interaction.reply({
-                content: "✅ Seu pedido foi enviado para análise!",
+                content: "✅ Pedido enviado!",
                 ephemeral: true
             });
         }
+
+        // APROVAR
+        if (interaction.isButton() && interaction.customId === 'aprovar') {
+
+            await interaction.update({
+                content: interaction.message.content.replace('Pendente', 'Aprovado ✅'),
+                components: []
+            });
+        }
+
+        // REPROVAR
+        if (interaction.isButton() && interaction.customId === 'reprovar') {
+
+            await interaction.update({
+                content: interaction.message.content.replace('Pendente', 'Reprovado ❌'),
+                components: []
+            });
+        }
+
+    } catch (err) {
+        console.error(err);
     }
-
-    // APROVAR
-    if (interaction.isButton() && interaction.customId === 'aprovar') {
-
-        await interaction.update({
-            content: interaction.message.content.replace('Pendente', 'Aprovado ✅'),
-            components: []
-        });
-    }
-
-    // REPROVAR
-    if (interaction.isButton() && interaction.customId === 'reprovar') {
-
-        await interaction.update({
-            content: interaction.message.content.replace('Pendente', 'Reprovado ❌'),
-            components: []
-        });
-    }
-
 });
 
-client.login('SEU_TOKEN_AQUI');
+// LOGIN
+client.login(TOKEN);
