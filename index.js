@@ -1,70 +1,57 @@
-import discord
-from discord.ext import commands
+const { Client, GatewayIntentBits, Events } = require('discord.js');
 
-# Criação do bot com intents apropriadas
-intents = discord.Intents.default()
-intents.messages = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+// Criação do cliente do bot
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
 
-# Evento quando o bot estiver pronto
-@bot.event
-async def on_ready():
-    print(f'Bot {bot.user.name} está online e pronto para ajudar!')
+// Evento quando o bot estiver pronto
+client.once(Events.ClientReady, () => {
+    console.log(`Bot ${client.user.tag} está online e pronto para ajudar!`);
+});
 
-# Comando para pedir informações sobre um funcionário
-@bot.command()
-async def pedir_informacoes(ctx):
-    await ctx.send("Por favor, forneça as informações do funcionário na forma de mensagens separadas.\n"
-                   "Responda na seguinte ordem:\n"
-                   "1. **Id**\n"
-                   "2. **Nome**\n"
-                   "3. **Unidade**\n"
-                   "4. **Cargo**\n"
-                   "5. **Responsável** (mencionar o responsável)")
+// Comando para pedir informações sobre um funcionário
+client.on(Events.MessageCreate, async (message) => {
+    if (message.content.startsWith('!pedir_informacoes') && !message.author.bot) {
+        await message.author.send("Por favor, forneça as informações do funcionário na forma de mensagens separadas.\n" +
+            "Responda na seguinte ordem:\n" +
+            "1. **Id**\n" +
+            "2. **Nome**\n" +
+            "3. **Unidade**\n" +
+            "4. **Cargo**\n" +
+            "5. **Responsável** (mencionar o responsável)");
 
-    # Aguardando as respostas do usuário
-    def check(m):
-        return m.author == ctx.author and m.channel == ctx.channel
+        // Aguardando as respostas do usuário
+        const filter = response => response.author.id === message.author.id;
 
-    try:
-        # Coletando informações em cinco etapas
-        id_msg = await bot.wait_for('message', check=check)
-        id_value = id_msg.content
+        try {
+            const id_msg = await message.author.dmChannel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] });
+            const id_value = id_msg.first().content;
 
-        nome_msg = await bot.wait_for('message', check=check)
-        nome_value = nome_msg.content
+            const nome_msg = await message.author.dmChannel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] });
+            const nome_value = nome_msg.first().content;
 
-        unidade_msg = await bot.wait_for('message', check=check)
-        unidade_value = unidade_msg.content
+            const unidade_msg = await message.author.dmChannel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] });
+            const unidade_value = unidade_msg.first().content;
 
-        cargo_msg = await bot.wait_for('message', check=check)
-        cargo_value = cargo_msg.content
+            const cargo_msg = await message.author.dmChannel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] });
+            const cargo_value = cargo_msg.first().content;
 
-        responsavel_msg = await bot.wait_for('message', check=check)
-        responsavel_value = responsavel_msg.content
+            const responsavel_msg = await message.author.dmChannel.awaitMessages({ filter, max: 1, time: 30000, errors: ['time'] });
+            const responsavel_value = responsavel_msg.first().content;
 
-        # Mensagem final de confirmação
-        await ctx.send(f"**Informações do Funcionário Registradas:**\n"
-                       f"Id: {id_value}\n"
-                       f"Nome: {nome_value}\n"
-                       f"Unidade: {unidade_value}\n"
-                       f"Cargo: {cargo_value}\n"
-                       f"Responsável: {responsavel_value}")
+            // Mensagem final de confirmação
+            await message.channel.send(`**Informações do Funcionário Registradas:**\n` +
+                `Id: ${id_value}\n` +
+                `Nome: ${nome_value}\n` +
+                `Unidade: ${unidade_value}\n` +
+                `Cargo: ${cargo_value}\n` +
+                `Responsável: ${responsavel_value}`);
 
-    except Exception as e:
-        await ctx.send("Ocorreu um erro. Certifique-se de responder todas as perguntas corretamente.")
+        } catch (err) {
+            await message.channel.send("Ocorreu um erro ou o tempo esgotou. Certifique-se de responder a todas as perguntas.");
+        }
+    }
+});
 
-# Comando de ajuda
-@bot.command()
-async def ajuda(ctx):
-    help_message = (
-        "Aqui estão os comandos disponíveis:\n"
-        "`!pedir_informacoes`: Inicia o processo de coleta de informações sobre um funcionário.\n"
-        "Responda na ordem: Id, Nome, Unidade, Cargo e Responsável.\n"
-        "`!ajuda`: Mostra esta mensagem de ajuda."
-    )
-    await ctx.send(help_message)
-
-# Inicie o bot com o token obtido da página do desenvolvedor do Discord
-TOKEN = 'YOUR_BOT_TOKEN'  # Coloque seu token aqui
-bot.run(TOKEN)
+// Comando de ajuda
+client.on(Events.MessageCreate, (message) => {
+    if (message.content.startsWith('!ajuda
