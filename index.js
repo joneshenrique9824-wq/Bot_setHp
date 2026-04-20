@@ -14,13 +14,19 @@ const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent // 🔥 ESSENCIAL
+        GatewayIntentBits.MessageContent
     ]
 });
 
-// 🔧 CONFIG (Railway Variables)
+// 🔧 CONFIG
 const TOKEN = process.env.TOKEN;
 const CANAL_LOG = '1495178025602515177';
+
+// 🚨 VERIFICA TOKEN
+if (!TOKEN) {
+    console.error("❌ TOKEN NÃO DEFINIDO NO RAILWAY!");
+    process.exit(1); // evita crash silencioso
+}
 
 // ONLINE
 client.once(Events.ClientReady, () => {
@@ -49,7 +55,7 @@ client.on(Events.MessageCreate, async (message) => {
 client.on(Events.InteractionCreate, async (interaction) => {
     try {
 
-        // ABRIR FORM
+        // FORM
         if (interaction.isButton() && interaction.customId === 'pedir_set') {
 
             const modal = new ModalBuilder()
@@ -76,8 +82,18 @@ client.on(Events.InteractionCreate, async (interaction) => {
             return interaction.showModal(modal);
         }
 
-        // ENVIO FORM
+        // ENVIO
         if (interaction.isModalSubmit() && interaction.customId === 'form_set') {
+
+            const canal = await client.channels.fetch(CANAL_LOG).catch(() => null);
+
+            if (!canal || !canal.isTextBased()) {
+                console.log("❌ Canal inválido ou sem acesso");
+                return interaction.reply({
+                    content: "❌ Erro no canal de envio.",
+                    ephemeral: true
+                });
+            }
 
             const dados = {
                 id: interaction.fields.getTextInputValue('id'),
@@ -86,12 +102,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
                 cargo: interaction.fields.getTextInputValue('cargo'),
                 responsavel: interaction.fields.getTextInputValue('responsavel')
             };
-
-            const canal = await client.channels.fetch(CANAL_LOG).catch(() => null);
-
-            if (!canal) {
-                return interaction.reply({ content: "❌ Canal inválido!", ephemeral: true });
-            }
 
             const botoes = new ActionRowBuilder().addComponents(
                 new ButtonBuilder()
@@ -139,7 +149,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
         }
 
     } catch (err) {
-        console.error('ERRO:', err);
+        console.error("ERRO INTERAÇÃO:", err);
     }
 });
 
