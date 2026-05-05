@@ -21,7 +21,7 @@ const GUILD_ID = process.env.GUILD_ID;
 const LEADER_ROLE_ID = process.env.LEADER_ROLE_ID;
 
 // 🌐 LINK DISCORD
-const DISCORD_LINK = "https://discord.gg/SEULINK"; // TROCA
+const DISCORD_LINK = "https://discord.gg/y6tJAK3fF5"; // TROCA
 
 // 🎖️ CARGOS
 const ROLE_PARAMEDICO_ID = "1477683902079303934";
